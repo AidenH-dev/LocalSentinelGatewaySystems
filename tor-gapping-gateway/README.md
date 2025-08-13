@@ -117,9 +117,8 @@ The goal:
    Log notice file /var/log/tor/notices.log
    ```
    Save and exit (Esc → :wq → Enter).
-
-   4. Redirect All Traffic Through Tor
-   5. 
+ 
+5. Redirect All Traffic Through Tor
    Edit the firewall rules:
 
    ```bash
@@ -136,18 +135,18 @@ The goal:
    Save and exit.
    ```
 
-   5. Enable Tor on Boot
+6. Enable Tor on Boot
    ```bash
    /etc/init.d/tor enable
    /etc/init.d/tor start
    ```
 
-   6. Restart Firewall
+7. Restart Firewall
    ```bash
    /etc/init.d/firewall restart
    ```
    
-   7. Test
+8. Test
    From any device connected to the WRT3200ACM, visit:
    🔗 https://check.torproject.org
 
