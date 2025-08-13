@@ -84,6 +84,70 @@ The goal:
 4. **SSH into the router** and install Tor:
    ```bash
    ssh root@192.168.1.1
+   opkg install tor tor-geoip
    ```
 
+
+   Edit Tor’s Configuration
+   
+   Open the Tor config file:
+
+   ```bash
+   vi /etc/tor/torrc
+   ```
+   
+   Add/modify the following lines for transparent proxy mode:
+
+   ```ini
+   RunAsDaemon 1
+   
+   # Transparent proxy port for TCP
+   TransPort 9040
+   
+   # DNS over Tor
+   DNSPort 9053
+   
+   AutomapHostsOnResolve 1
+   VirtualAddrNetworkIPv4 10.192.0.0/10
+   
+   # Disable SOCKS port (we're doing transparent routing)
+   SocksPort 0
+   
+   # Logging (change 'notice' to 'info' for more detail)
+   Log notice file /var/log/tor/notices.log
+   ```
+   Save and exit (Esc → :wq → Enter).
+
+   4. Redirect All Traffic Through Tor
+   5. 
+   Edit the firewall rules:
+
+   ```bash
+   vi /etc/firewall.user
+   ```
+   Append:
+
+   ```bash
+   # Redirect DNS to Tor
+   iptables -t nat -A PREROUTING -i br-lan -p udp --dport 53 -j REDIRECT --to-ports 9053
+   
+   # Redirect TCP to Tor
+   iptables -t nat -A PREROUTING -i br-lan -p tcp --syn -j REDIRECT --to-ports 9040
+   Save and exit.
+   ```
+
+   5. Enable Tor on Boot
+   ```bash
+   /etc/init.d/tor enable
+   /etc/init.d/tor start
+   ```
+
+   6. Restart Firewall
+   ```bash
+   /etc/init.d/firewall restart
+   ```
+   
+   7. Test
+   From any device connected to the WRT3200ACM, visit:
+   🔗 https://check.torproject.org
 
