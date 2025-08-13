@@ -43,7 +43,47 @@ The goal:
 ##  Installation Overview
 
 1. **Flash OpenWrt** to the Linksys WRT3200ACM.
-2. **SSH into the router** and install Tor:
-   ...Still working on it...
+2. **Wire Linksys WRT to 5G Gateway**
+   ```javascript
+   Physical Wiring
+   
+   1: Take an Ethernet cable and plug one end into the LAN port of the T-Mobile 5G Gateway (often labeled LAN or numbered).
+   2: Plug the other end into the WAN port (sometimes blue) on the WRT3200ACM.
+   3: Connect the computer to one of the LAN ports (yellow) on the WRT3200ACM or join its Wi-Fi network.
+   ```
+   ```md
+   WAN Configuration on OpenWrt
+   
+   1. Log in to OpenWrt’s web interface (LuCI):
+   http://192.168.1.1
+   
+   2. Go to Network → Interfaces.
+   
+   3. Edit the WAN interface:
+      - Protocol: DHCP client (most T-Mobile gateways hand out IPs automatically).
+      - Device: Set to the physical WAN port (likely eth1 on WRT3200ACM).
+      - Save & Apply.
+   
+   4. Make sure LAN and WAN are separate networks:
+      - LAN: 192.168.1.x (the internal network)
+      - WAN: will get a different IP from the T-Mobile gateway (often 192.168.12.x or 192.168.0.x).
+   ```
+3. **Test Connection**
+   Test Internet on OpenWrt
+   SSH into the WRT3200ACM:
+   
+   ```bash
+   ssh root@192.168.1.1
+   ping -c 4 openwrt.org
+   ```
+   If replies, it’s online. If not:
+   
+   Double-check WAN is set to DHCP client.
+   
+   Reboot both the T-Mobile gateway and the WRT3200ACM.
+4. **SSH into the router** and install Tor:
+   ```bash
+   ssh root@192.168.1.1
+   ```
 
 
