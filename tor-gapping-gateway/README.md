@@ -44,8 +44,6 @@ The goal:
 
 1. **Flash OpenWrt** to the Linksys WRT3200ACM.
 2. **SSH into the router** and install Tor:
-   ```bash
-   opkg update
-   opkg install tor tor-geoip
+   ...Still working on it...
 
 
