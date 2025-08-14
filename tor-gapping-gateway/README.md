@@ -82,71 +82,105 @@ The goal:
    
    Reboot both the T-Mobile gateway and the WRT3200ACM.
 4. **SSH into the router** and install Tor:
+
+   Install the required packages. Configure Tor client.
    ```bash
-   ssh root@192.168.1.1
-   opkg install tor tor-geoip
+   opkg update
+   opkg install tor
    ```
-
-
-   Edit Tor’s Configuration
-   
-   Open the Tor config file:
-
+ 
+   Configure Tor client
    ```bash
-   vi /etc/tor/torrc
-   ```
-   
-   Add/modify the following lines for transparent proxy mode:
-
-   ```ini
-   RunAsDaemon 1
-   
-   # Transparent proxy port for TCP
-   TransPort 9040
-   
-   # DNS over Tor
-   DNSPort 9053
-   
+   cat << EOF > /etc/tor/custom
    AutomapHostsOnResolve 1
-   VirtualAddrNetworkIPv4 10.192.0.0/10
+   AutomapHostsSuffixes .
+   VirtualAddrNetworkIPv4 172.16.0.0/12
+   VirtualAddrNetworkIPv6 [fc00::]/8
+   DNSPort 0.0.0.0:9053
+   DNSPort [::]:9053
+   TransPort 0.0.0.0:9040
+   TransPort [::]:9040
+   EOF
+   cat << EOF >> /etc/sysupgrade.conf
+   /etc/tor
+   EOF
+   uci del_list tor.conf.tail_include="/etc/tor/custom"
+   uci add_list tor.conf.tail_include="/etc/tor/custom"
+   uci commit tor
+   service tor restart
+   ```
+   Disable IPv6 GUA prefix and announce IPv6 default route.
+
+5. **DNS over Tor**
+   Configure firewall to intercept DNS traffic.
    
-   # Disable SOCKS port (we're doing transparent routing)
-   SocksPort 0
+   ```bash
+   # Intercept DNS traffic
+   uci -q del firewall.dns_int
+   uci set firewall.dns_int="redirect"
+   uci set firewall.dns_int.name="Intercept-DNS"
+   uci set firewall.dns_int.family="any"
+   uci set firewall.dns_int.proto="tcp udp"
+   uci set firewall.dns_int.src="lan"
+   uci set firewall.dns_int.src_dport="53"
+   uci set firewall.dns_int.dest_port="53"
+   uci set firewall.dns_int.target="DNAT"
+   uci commit firewall
+   service firewall restart
+   Redirect DNS traffic to Tor and prevent DNS leaks.
+
+   # Enable DNS over Tor
+   service dnsmasq stop
+   uci set dhcp.@dnsmasq[0].localuse="0"
+   uci set dhcp.@dnsmasq[0].noresolv="1"
+   uci set dhcp.@dnsmasq[0].rebind_protection="0"
+   uci -q delete dhcp.@dnsmasq[0].server
+   uci add_list dhcp.@dnsmasq[0].server="127.0.0.1#9053"
+   uci add_list dhcp.@dnsmasq[0].server="::1#9053"
+   uci commit dhcp
+   service dnsmasq start
+   ```
    
-   # Logging (change 'notice' to 'info' for more detail)
-   Log notice file /var/log/tor/notices.log
-   ```
-   Save and exit (Esc → :wq → Enter).
- 
-5. Redirect All Traffic Through Tor
-   Edit the firewall rules:
+7. Firewall
+
+   Configure firewall to intercept LAN traffic. Disable LAN to WAN forwarding to prevent traffic leaks.
 
    ```bash
-   vi /etc/firewall.user
+   # Intercept TCP traffic
+   cat << "EOF" > /etc/nftables.d/tor.sh
+   TOR_CHAIN="dstnat_$(uci -q get firewall.tcp_int.src)"
+   TOR_RULE="$(nft -a list chain inet fw4 ${TOR_CHAIN} \
+   | sed -n -e "/Intercept-TCP/p")"
+   nft replace rule inet fw4 ${TOR_CHAIN} \
+   handle ${TOR_RULE##* } \
+   fib daddr type != { local, broadcast } ${TOR_RULE}
+   EOF
+   uci -q delete firewall.tor_nft
+   uci set firewall.tor_nft="include"
+   uci set firewall.tor_nft.path="/etc/nftables.d/tor.sh"
+   uci -q delete firewall.tcp_int
+   uci set firewall.tcp_int="redirect"
+   uci set firewall.tcp_int.name="Intercept-TCP"
+   uci set firewall.tcp_int.src="lan"
+   uci set firewall.tcp_int.src_dport="0-65535"
+   uci set firewall.tcp_int.dest_port="9040"
+   uci set firewall.tcp_int.proto="tcp"
+   uci set firewall.tcp_int.family="any"
+   uci set firewall.tcp_int.target="DNAT"
    ```
-   Append:
-
    ```bash
-   # Redirect DNS to Tor
-   iptables -t nat -A PREROUTING -i br-lan -p udp --dport 53 -j REDIRECT --to-ports 9053
-   
-   # Redirect TCP to Tor
-   iptables -t nat -A PREROUTING -i br-lan -p tcp --syn -j REDIRECT --to-ports 9040
-   Save and exit.
-   ```
-
-6. Enable Tor on Boot
-   ```bash
-   /etc/init.d/tor enable
-   /etc/init.d/tor start
-   ```
-
-7. Restart Firewall
-   ```bash
-   /etc/init.d/firewall restart
+   # Disable LAN to WAN forwarding
+   uci -q delete firewall.@forwarding[0]
+   uci commit firewall
+   service firewall restart
    ```
    
 8. Test
+
    From any device connected to the WRT3200ACM, visit:
-   🔗 https://check.torproject.org
+   https://check.torproject.org
+
+**Acknowledgements**
+
+Installing and configuring guidelines steps 4-8 were provided by this OpenWRT user guide: https://openwrt.org/docs/guide-user/services/tor/client
 
