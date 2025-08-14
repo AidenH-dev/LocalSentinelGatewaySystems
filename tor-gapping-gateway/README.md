@@ -180,6 +180,10 @@ The goal:
    From any device connected to the WRT3200ACM, visit:
    https://check.torproject.org
 
+### Considerations
+
+While all DNS lookups, TCP connections and Accidental Direct Connections are now tor protected all UDP or QUIC are not protected. This leads us to the next problem to solve covering the privacy and security of that type of traffic. (LINK TO SELF HOSTED VPN PART OF PROJECT)
+
 **Acknowledgements**
 
 Installing and configuring guidelines steps 4-8 were provided by this OpenWRT user guide: https://openwrt.org/docs/guide-user/services/tor/client
