@@ -1,4 +1,4 @@
-#  Tor-Gapping Gateway — Linksys WRT3200ACM Edition
+#  Tor-Gapping Gateway With a Linksys WRT3200ACM
 
 **_“Tor Gapping”_** — My term for adding a **dedicated router** in front of a default network ISP router that forces **all devices** to route their traffic through the **Tor network**.
 
