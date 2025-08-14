@@ -182,7 +182,7 @@ The goal:
 
 ### Considerations
 
-While all DNS lookups, TCP connections and Accidental Direct Connections are now tor protected all UDP or QUIC are not protected. This leads us to the next problem to solve covering the privacy and security of that type of traffic. (LINK TO SELF HOSTED VPN PART OF PROJECT)
+While all DNS lookups, TCP connections and Accidental Direct Connections are now tor protected all UDP or QUIC are not protected. This leads us to the next problem to solve covering the privacy and security of that type of traffic. (LINK TO SELF HOSTED VPN PART OF PROJECT) More work has been done blocking and disabling UDP and QUIC in the router firewall to disable any user from accidentally exposing themself when connected to the network. 
 
 **Acknowledgements**
 
