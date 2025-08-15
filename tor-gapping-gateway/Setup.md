@@ -88,7 +88,6 @@ The goal:
    opkg update
    opkg install tor
    ```
- 
    Configure Tor client
    ```bash
    cat << EOF > /etc/tor/custom
